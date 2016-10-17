@@ -129,9 +129,9 @@ class EcsTaskManager:
         except botocore.exceptions.ClientError:
             return None
 
-    def register_task(self, family, container_definitions, volumes):
+    def register_task(self, family, container_definitions, volumes, network_mode='bridge'):
         response = self.ecs.register_task_definition(family=family,
-            containerDefinitions=container_definitions, volumes=volumes)
+            containerDefinitions=container_definitions, volumes=volumes, networkMode=network_mode)
         return response['taskDefinition']
 
     def deregister_task(self, taskArn):
@@ -143,6 +143,7 @@ def main():
     argument_spec = ec2_argument_spec()
     argument_spec.update(dict(
         state=dict(required=True, choices=['present', 'absent'] ),
+        network_mode=dict(required=False, type='str' ),
         arn=dict(required=False, type='str' ),
         family=dict(required=False, type='str' ),
         revision=dict(required=False, type='int' ),
@@ -193,7 +194,7 @@ def main():
                 if volumes is None:
                     volumes = []
                 results['taskdefinition'] = task_mgr.register_task(module.params['family'],
-                    module.params['containers'], volumes)
+                    module.params['containers'], volumes, module.params['network_mode'])
             results['changed'] = True
 
     # delete the cloudtrai
